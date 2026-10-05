@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/camunda" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_Granja" targetNamespace="http://granja-pollos.example/bpmn" exporter="Claude" exporterVersion="1.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.20.0" >
+  <bpmn:collaboration id="Collab_Granja">
+    <bpmn:participant id="Participant_Abastecimiento" name="Abastecimiento de pollo (Avimarca / Bachoco)" processRef="Process_Abastecimiento" />
+    <bpmn:participant id="Participant_VentaVivo" name="Venta mayorista de pollo vivo" processRef="Process_VentaVivo" />
+    <bpmn:participant id="Participant_VentaDestazado" name="Procesamiento y venta de pollo destazado" processRef="Process_VentaDestazado" />
+    <bpmn:messageFlow id="Msg_Faltante" name="Solicitud de abasto" sourceRef="VentaVivo_t7" targetRef="Abastecimiento_t1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Abastecimiento" name="Abastecimiento de pollo (Avimarca / Bachoco)" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="Abastecimiento_s1" name="Se requiere reabasto de pollo">
+      <bpmn:outgoing>Abastecimiento_f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Abastecimiento_t1" name="Revisar inventario y demanda" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f1</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Abastecimiento_t2" name="Solicitar cotización a Avimarca y Bachoco" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f2</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Abastecimiento_t3" name="Comparar precios y condiciones" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f3</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f4</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Abastecimiento_g1" name="¿Qué proveedor conviene?" default="Abastecimiento_f6">
+      <bpmn:incoming>Abastecimiento_f4</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f5</bpmn:outgoing>
+      <bpmn:outgoing>Abastecimiento_f6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Abastecimiento_t4" name="Generar orden de compra a Avimarca" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f5</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Abastecimiento_t5" name="Generar orden de compra a Bachoco" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f6</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Abastecimiento_g2" name="">
+      <bpmn:incoming>Abastecimiento_f7</bpmn:incoming>
+      <bpmn:incoming>Abastecimiento_f8</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f9</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="Abastecimiento_t6" name="Recibir y verificar lote (peso y sanidad)">
+      <bpmn:incoming>Abastecimiento_f9</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f10</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="Abastecimiento_g3" name="¿Lote conforme?" default="Abastecimiento_f12">
+      <bpmn:incoming>Abastecimiento_f10</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f11</bpmn:outgoing>
+      <bpmn:outgoing>Abastecimiento_f12</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Abastecimiento_t7" name="Registrar ingreso a inventario" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f11</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Abastecimiento_t8" name="Reclamar y devolver lote" camunda:candidateGroups="compras">
+      <bpmn:incoming>Abastecimiento_f12</bpmn:incoming>
+      <bpmn:outgoing>Abastecimiento_f14</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Abastecimiento_e1" name="Lote ingresado a inventario">
+      <bpmn:incoming>Abastecimiento_f13</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="Abastecimiento_e2" name="Lote rechazado">
+      <bpmn:incoming>Abastecimiento_f14</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Abastecimiento_f1" sourceRef="Abastecimiento_s1" targetRef="Abastecimiento_t1" />
+    <bpmn:sequenceFlow id="Abastecimiento_f2" sourceRef="Abastecimiento_t1" targetRef="Abastecimiento_t2" />
+    <bpmn:sequenceFlow id="Abastecimiento_f3" sourceRef="Abastecimiento_t2" targetRef="Abastecimiento_t3" />
+    <bpmn:sequenceFlow id="Abastecimiento_f4" sourceRef="Abastecimiento_t3" targetRef="Abastecimiento_g1" />
+    <bpmn:sequenceFlow id="Abastecimiento_f5" name="Avimarca" sourceRef="Abastecimiento_g1" targetRef="Abastecimiento_t4">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${proveedor == 'Avimarca'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Abastecimiento_f6" name="Bachoco" sourceRef="Abastecimiento_g1" targetRef="Abastecimiento_t5" />
+    <bpmn:sequenceFlow id="Abastecimiento_f7" sourceRef="Abastecimiento_t4" targetRef="Abastecimiento_g2" />
+    <bpmn:sequenceFlow id="Abastecimiento_f8" sourceRef="Abastecimiento_t5" targetRef="Abastecimiento_g2" />
+    <bpmn:sequenceFlow id="Abastecimiento_f9" sourceRef="Abastecimiento_g2" targetRef="Abastecimiento_t6" />
+    <bpmn:sequenceFlow id="Abastecimiento_f10" sourceRef="Abastecimiento_t6" targetRef="Abastecimiento_g3" />
+    <bpmn:sequenceFlow id="Abastecimiento_f11" name="Sí" sourceRef="Abastecimiento_g3" targetRef="Abastecimiento_t7">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${loteConforme}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Abastecimiento_f12" name="No" sourceRef="Abastecimiento_g3" targetRef="Abastecimiento_t8" />
+    <bpmn:sequenceFlow id="Abastecimiento_f13" sourceRef="Abastecimiento_t7" targetRef="Abastecimiento_e1" />
+    <bpmn:sequenceFlow id="Abastecimiento_f14" sourceRef="Abastecimiento_t8" targetRef="Abastecimiento_e2" />
+  </bpmn:process>
+  <bpmn:process id="Process_VentaVivo" name="Venta mayorista de pollo vivo" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="VentaVivo_s1" name="Pedido de cliente mayorista">
+      <bpmn:outgoing>VentaVivo_f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="VentaVivo_t1" name="Recibir pedido de pollo vivo" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f1</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="VentaVivo_t2" name="Verificar disponibilidad de aves" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f2</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="VentaVivo_g1" name="¿Hay existencia suficiente?" default="VentaVivo_f5">
+      <bpmn:incoming>VentaVivo_f3</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f4</bpmn:outgoing>
+      <bpmn:outgoing>VentaVivo_f5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="VentaVivo_t3" name="Cotizar y confirmar precio por kilo" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f4</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f6</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="VentaVivo_t4" name="Cobrar anticipo" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f6</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:manualTask id="VentaVivo_t5" name="Pesar y cargar aves en jaulas">
+      <bpmn:incoming>VentaVivo_f7</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f8</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:userTask id="VentaVivo_t6" name="Entregar aves y facturar" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f8</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f9</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="VentaVivo_e1" name="Venta de pollo vivo cerrada">
+      <bpmn:incoming>VentaVivo_f9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="VentaVivo_t7" name="Notificar faltante y solicitar abasto" camunda:candidateGroups="ventas">
+      <bpmn:incoming>VentaVivo_f5</bpmn:incoming>
+      <bpmn:outgoing>VentaVivo_f10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="VentaVivo_e2" name="Pedido en espera de abasto">
+      <bpmn:incoming>VentaVivo_f10</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="VentaVivo_f1" sourceRef="VentaVivo_s1" targetRef="VentaVivo_t1" />
+    <bpmn:sequenceFlow id="VentaVivo_f2" sourceRef="VentaVivo_t1" targetRef="VentaVivo_t2" />
+    <bpmn:sequenceFlow id="VentaVivo_f3" sourceRef="VentaVivo_t2" targetRef="VentaVivo_g1" />
+    <bpmn:sequenceFlow id="VentaVivo_f4" name="Sí" sourceRef="VentaVivo_g1" targetRef="VentaVivo_t3">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${hayExistencia}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="VentaVivo_f5" name="No" sourceRef="VentaVivo_g1" targetRef="VentaVivo_t7" />
+    <bpmn:sequenceFlow id="VentaVivo_f6" sourceRef="VentaVivo_t3" targetRef="VentaVivo_t4" />
+    <bpmn:sequenceFlow id="VentaVivo_f7" sourceRef="VentaVivo_t4" targetRef="VentaVivo_t5" />
+    <bpmn:sequenceFlow id="VentaVivo_f8" sourceRef="VentaVivo_t5" targetRef="VentaVivo_t6" />
+    <bpmn:sequenceFlow id="VentaVivo_f9" sourceRef="VentaVivo_t6" targetRef="VentaVivo_e1" />
+    <bpmn:sequenceFlow id="VentaVivo_f10" sourceRef="VentaVivo_t7" targetRef="VentaVivo_e2" />
+  </bpmn:process>
+  <bpmn:process id="Process_VentaDestazado" name="Procesamiento y venta de pollo destazado" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="VentaDestazado_s1" name="Pedido de pollo destazado">
+      <bpmn:outgoing>VentaDestazado_f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="VentaDestazado_t1" name="Recibir pedido y confirmar cantidades" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f1</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="VentaDestazado_t2" name="Seleccionar aves del inventario" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f2</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:manualTask id="VentaDestazado_t3" name="Sacrificio y desplume">
+      <bpmn:incoming>VentaDestazado_f3</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f4</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="VentaDestazado_t4" name="Destazado y corte (pechuga, pierna, ala)">
+      <bpmn:incoming>VentaDestazado_f4</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f5</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:userTask id="VentaDestazado_t5" name="Inspección sanitaria" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f5</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f6</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="VentaDestazado_g1" name="¿Cumple norma sanitaria?" default="VentaDestazado_f8">
+      <bpmn:incoming>VentaDestazado_f6</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f7</bpmn:outgoing>
+      <bpmn:outgoing>VentaDestazado_f8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="VentaDestazado_t6" name="Empacar y refrigerar">
+      <bpmn:incoming>VentaDestazado_f7</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f9</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:userTask id="VentaDestazado_t7" name="Facturar y despachar" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f9</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="VentaDestazado_t8" name="Cobrar al cliente" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f10</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="VentaDestazado_e1" name="Venta de pollo destazado cerrada">
+      <bpmn:incoming>VentaDestazado_f11</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="VentaDestazado_t9" name="Desechar o reprocesar lote" camunda:candidateGroups="produccion">
+      <bpmn:incoming>VentaDestazado_f8</bpmn:incoming>
+      <bpmn:outgoing>VentaDestazado_f12</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="VentaDestazado_e2" name="Lote descartado">
+      <bpmn:incoming>VentaDestazado_f12</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="VentaDestazado_f1" sourceRef="VentaDestazado_s1" targetRef="VentaDestazado_t1" />
+    <bpmn:sequenceFlow id="VentaDestazado_f2" sourceRef="VentaDestazado_t1" targetRef="VentaDestazado_t2" />
+    <bpmn:sequenceFlow id="VentaDestazado_f3" sourceRef="VentaDestazado_t2" targetRef="VentaDestazado_t3" />
+    <bpmn:sequenceFlow id="VentaDestazado_f4" sourceRef="VentaDestazado_t3" targetRef="VentaDestazado_t4" />
+    <bpmn:sequenceFlow id="VentaDestazado_f5" sourceRef="VentaDestazado_t4" targetRef="VentaDestazado_t5" />
+    <bpmn:sequenceFlow id="VentaDestazado_f6" sourceRef="VentaDestazado_t5" targetRef="VentaDestazado_g1" />
+    <bpmn:sequenceFlow id="VentaDestazado_f7" name="Sí" sourceRef="VentaDestazado_g1" targetRef="VentaDestazado_t6">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${cumpleSanidad}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="VentaDestazado_f8" name="No" sourceRef="VentaDestazado_g1" targetRef="VentaDestazado_t9" />
+    <bpmn:sequenceFlow id="VentaDestazado_f9" sourceRef="VentaDestazado_t6" targetRef="VentaDestazado_t7" />
+    <bpmn:sequenceFlow id="VentaDestazado_f10" sourceRef="VentaDestazado_t7" targetRef="VentaDestazado_t8" />
+    <bpmn:sequenceFlow id="VentaDestazado_f11" sourceRef="VentaDestazado_t8" targetRef="VentaDestazado_e1" />
+    <bpmn:sequenceFlow id="VentaDestazado_f12" sourceRef="VentaDestazado_t9" targetRef="VentaDestazado_e2" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_Granja">
+    <bpmndi:BPMNPlane id="Plane_Granja" bpmnElement="Collab_Granja">
+      <bpmndi:BPMNShape id="Participant_Abastecimiento_di" bpmnElement="Participant_Abastecimiento" isHorizontal="true">
+        <dc:Bounds x="160" y="40" width="1690" height="300" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_VentaVivo_di" bpmnElement="Participant_VentaVivo" isHorizontal="true">
+        <dc:Bounds x="160" y="380" width="1690" height="300" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_VentaDestazado_di" bpmnElement="Participant_VentaDestazado" isHorizontal="true">
+        <dc:Bounds x="160" y="720" width="1690" height="300" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_s1_di" bpmnElement="Abastecimiento_s1">
+        <dc:Bounds x="232" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="200" y="212" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t1_di" bpmnElement="Abastecimiento_t1">
+        <dc:Bounds x="345" y="155" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t2_di" bpmnElement="Abastecimiento_t2">
+        <dc:Bounds x="495" y="155" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t3_di" bpmnElement="Abastecimiento_t3">
+        <dc:Bounds x="645" y="155" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_g1_di" bpmnElement="Abastecimiento_g1" isMarkerVisible="true">
+        <dc:Bounds x="825" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="760" y="219" width="85" height="40" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t4_di" bpmnElement="Abastecimiento_t4">
+        <dc:Bounds x="945" y="65" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t5_di" bpmnElement="Abastecimiento_t5">
+        <dc:Bounds x="945" y="245" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_g2_di" bpmnElement="Abastecimiento_g2" isMarkerVisible="true">
+        <dc:Bounds x="1125" y="165" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t6_di" bpmnElement="Abastecimiento_t6">
+        <dc:Bounds x="1245" y="155" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_g3_di" bpmnElement="Abastecimiento_g3" isMarkerVisible="true">
+        <dc:Bounds x="1425" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1360" y="219" width="85" height="40" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t7_di" bpmnElement="Abastecimiento_t7">
+        <dc:Bounds x="1545" y="155" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_t8_di" bpmnElement="Abastecimiento_t8">
+        <dc:Bounds x="1545" y="245" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_e1_di" bpmnElement="Abastecimiento_e1">
+        <dc:Bounds x="1732" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1700" y="212" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Abastecimiento_e2_di" bpmnElement="Abastecimiento_e2">
+        <dc:Bounds x="1732" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1700" y="302" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_s1_di" bpmnElement="VentaVivo_s1">
+        <dc:Bounds x="232" y="512" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="200" y="552" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t1_di" bpmnElement="VentaVivo_t1">
+        <dc:Bounds x="345" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t2_di" bpmnElement="VentaVivo_t2">
+        <dc:Bounds x="495" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_g1_di" bpmnElement="VentaVivo_g1" isMarkerVisible="true">
+        <dc:Bounds x="675" y="505" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="610" y="559" width="85" height="40" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t3_di" bpmnElement="VentaVivo_t3">
+        <dc:Bounds x="795" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t4_di" bpmnElement="VentaVivo_t4">
+        <dc:Bounds x="945" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t5_di" bpmnElement="VentaVivo_t5">
+        <dc:Bounds x="1095" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t6_di" bpmnElement="VentaVivo_t6">
+        <dc:Bounds x="1245" y="495" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_e1_di" bpmnElement="VentaVivo_e1">
+        <dc:Bounds x="1432" y="512" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1400" y="552" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_t7_di" bpmnElement="VentaVivo_t7">
+        <dc:Bounds x="795" y="405" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaVivo_e2_di" bpmnElement="VentaVivo_e2">
+        <dc:Bounds x="982" y="422" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="950" y="462" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_s1_di" bpmnElement="VentaDestazado_s1">
+        <dc:Bounds x="232" y="852" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="200" y="892" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t1_di" bpmnElement="VentaDestazado_t1">
+        <dc:Bounds x="345" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t2_di" bpmnElement="VentaDestazado_t2">
+        <dc:Bounds x="495" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t3_di" bpmnElement="VentaDestazado_t3">
+        <dc:Bounds x="645" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t4_di" bpmnElement="VentaDestazado_t4">
+        <dc:Bounds x="795" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t5_di" bpmnElement="VentaDestazado_t5">
+        <dc:Bounds x="945" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_g1_di" bpmnElement="VentaDestazado_g1" isMarkerVisible="true">
+        <dc:Bounds x="1125" y="845" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1060" y="899" width="85" height="40" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t6_di" bpmnElement="VentaDestazado_t6">
+        <dc:Bounds x="1245" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t7_di" bpmnElement="VentaDestazado_t7">
+        <dc:Bounds x="1395" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t8_di" bpmnElement="VentaDestazado_t8">
+        <dc:Bounds x="1545" y="835" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_e1_di" bpmnElement="VentaDestazado_e1">
+        <dc:Bounds x="1732" y="852" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1700" y="892" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_t9_di" bpmnElement="VentaDestazado_t9">
+        <dc:Bounds x="1245" y="925" width="110" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="VentaDestazado_e2_di" bpmnElement="VentaDestazado_e2">
+        <dc:Bounds x="1432" y="942" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1400" y="982" width="100" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Abastecimiento_f1_di" bpmnElement="Abastecimiento_f1">
+        <di:waypoint x="268" y="190" />
+        <di:waypoint x="345" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f2_di" bpmnElement="Abastecimiento_f2">
+        <di:waypoint x="455" y="190" />
+        <di:waypoint x="495" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f3_di" bpmnElement="Abastecimiento_f3">
+        <di:waypoint x="605" y="190" />
+        <di:waypoint x="645" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f4_di" bpmnElement="Abastecimiento_f4">
+        <di:waypoint x="755" y="190" />
+        <di:waypoint x="825" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f5_di" bpmnElement="Abastecimiento_f5">
+        <di:waypoint x="850" y="165" />
+        <di:waypoint x="850" y="100" />
+        <di:waypoint x="945" y="100" />
+        <bpmndi:BPMNLabel><dc:Bounds x="855" y="124" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f6_di" bpmnElement="Abastecimiento_f6">
+        <di:waypoint x="850" y="215" />
+        <di:waypoint x="850" y="280" />
+        <di:waypoint x="945" y="280" />
+        <bpmndi:BPMNLabel><dc:Bounds x="855" y="239" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f7_di" bpmnElement="Abastecimiento_f7">
+        <di:waypoint x="1055" y="100" />
+        <di:waypoint x="1150" y="100" />
+        <di:waypoint x="1150" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f8_di" bpmnElement="Abastecimiento_f8">
+        <di:waypoint x="1055" y="280" />
+        <di:waypoint x="1150" y="280" />
+        <di:waypoint x="1150" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f9_di" bpmnElement="Abastecimiento_f9">
+        <di:waypoint x="1175" y="190" />
+        <di:waypoint x="1245" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f10_di" bpmnElement="Abastecimiento_f10">
+        <di:waypoint x="1355" y="190" />
+        <di:waypoint x="1425" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f11_di" bpmnElement="Abastecimiento_f11">
+        <di:waypoint x="1475" y="190" />
+        <di:waypoint x="1545" y="190" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1481" y="170" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f12_di" bpmnElement="Abastecimiento_f12">
+        <di:waypoint x="1450" y="215" />
+        <di:waypoint x="1450" y="280" />
+        <di:waypoint x="1545" y="280" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1455" y="239" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f13_di" bpmnElement="Abastecimiento_f13">
+        <di:waypoint x="1655" y="190" />
+        <di:waypoint x="1732" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Abastecimiento_f14_di" bpmnElement="Abastecimiento_f14">
+        <di:waypoint x="1655" y="280" />
+        <di:waypoint x="1732" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f1_di" bpmnElement="VentaVivo_f1">
+        <di:waypoint x="268" y="530" />
+        <di:waypoint x="345" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f2_di" bpmnElement="VentaVivo_f2">
+        <di:waypoint x="455" y="530" />
+        <di:waypoint x="495" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f3_di" bpmnElement="VentaVivo_f3">
+        <di:waypoint x="605" y="530" />
+        <di:waypoint x="675" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f4_di" bpmnElement="VentaVivo_f4">
+        <di:waypoint x="725" y="530" />
+        <di:waypoint x="795" y="530" />
+        <bpmndi:BPMNLabel><dc:Bounds x="731" y="510" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f5_di" bpmnElement="VentaVivo_f5">
+        <di:waypoint x="700" y="505" />
+        <di:waypoint x="700" y="440" />
+        <di:waypoint x="795" y="440" />
+        <bpmndi:BPMNLabel><dc:Bounds x="705" y="464" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f6_di" bpmnElement="VentaVivo_f6">
+        <di:waypoint x="905" y="530" />
+        <di:waypoint x="945" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f7_di" bpmnElement="VentaVivo_f7">
+        <di:waypoint x="1055" y="530" />
+        <di:waypoint x="1095" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f8_di" bpmnElement="VentaVivo_f8">
+        <di:waypoint x="1205" y="530" />
+        <di:waypoint x="1245" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f9_di" bpmnElement="VentaVivo_f9">
+        <di:waypoint x="1355" y="530" />
+        <di:waypoint x="1432" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaVivo_f10_di" bpmnElement="VentaVivo_f10">
+        <di:waypoint x="905" y="440" />
+        <di:waypoint x="982" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f1_di" bpmnElement="VentaDestazado_f1">
+        <di:waypoint x="268" y="870" />
+        <di:waypoint x="345" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f2_di" bpmnElement="VentaDestazado_f2">
+        <di:waypoint x="455" y="870" />
+        <di:waypoint x="495" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f3_di" bpmnElement="VentaDestazado_f3">
+        <di:waypoint x="605" y="870" />
+        <di:waypoint x="645" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f4_di" bpmnElement="VentaDestazado_f4">
+        <di:waypoint x="755" y="870" />
+        <di:waypoint x="795" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f5_di" bpmnElement="VentaDestazado_f5">
+        <di:waypoint x="905" y="870" />
+        <di:waypoint x="945" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f6_di" bpmnElement="VentaDestazado_f6">
+        <di:waypoint x="1055" y="870" />
+        <di:waypoint x="1125" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f7_di" bpmnElement="VentaDestazado_f7">
+        <di:waypoint x="1175" y="870" />
+        <di:waypoint x="1245" y="870" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1181" y="850" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f8_di" bpmnElement="VentaDestazado_f8">
+        <di:waypoint x="1150" y="895" />
+        <di:waypoint x="1150" y="960" />
+        <di:waypoint x="1245" y="960" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1155" y="919" width="55" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f9_di" bpmnElement="VentaDestazado_f9">
+        <di:waypoint x="1355" y="870" />
+        <di:waypoint x="1395" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f10_di" bpmnElement="VentaDestazado_f10">
+        <di:waypoint x="1505" y="870" />
+        <di:waypoint x="1545" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f11_di" bpmnElement="VentaDestazado_f11">
+        <di:waypoint x="1655" y="870" />
+        <di:waypoint x="1732" y="870" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="VentaDestazado_f12_di" bpmnElement="VentaDestazado_f12">
+        <di:waypoint x="1355" y="960" />
+        <di:waypoint x="1432" y="960" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Msg_Faltante_di" bpmnElement="Msg_Faltante">
+        <di:waypoint x="850" y="405" />
+        <di:waypoint x="850" y="360" />
+        <di:waypoint x="400" y="360" />
+        <di:waypoint x="400" y="225" />
+        <bpmndi:BPMNLabel><dc:Bounds x="406" y="265" width="90" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
